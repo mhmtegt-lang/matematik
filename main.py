@@ -1,48 +1,70 @@
+import streamlit as st
 import time
-import os
 
-def ekran_temizle():
-    # Codespaces terminali için en temiz yöntem
-    print("\033[H\033[J", end="")
+# Sayfa tasarımı
+st.set_page_config(page_title="Zıplayan Virgül", layout="centered")
 
-def virgulu_kaydir():
-    while True:
-        ekran_temizle()
-        print("="*40)
-        print("   ONDALIK ÇARPMA SİMÜLATÖRÜ")
-        print("="*40)
-        
-        giris = input("\nBir ondalık sayı gir (Örn: 3.45): ").replace(',', '.')
-        if '.' not in giris: giris += '.'
-        sayi_listesi = list(giris)
-        
-        try:
-            carpan = int(input("Çarpanı seç (10, 100, 1000): "))
-            if carpan not in [10, 100, 1000]: raise ValueError
-        except:
-            print("Lütfen sadece 10, 100 veya 1000 girin!")
-            time.sleep(2); continue
+# Görsel stil ayarları
+st.markdown("""
+    <style>
+    .stApp { background-color: #0d1117; color: white; }
+    .digit-card {
+        background-color: white; color: #0d1117;
+        border-radius: 10px; padding: 15px;
+        font-size: 50px; font-weight: bold;
+        text-align: center; margin: 5px;
+        display: inline-block; width: 70px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+    .comma-style {
+        font-size: 60px; color: #ff4b4b;
+        font-weight: bold; margin: 0 10px;
+        display: inline-block;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-        adim = len(str(carpan)) - 1
-        
-        for i in range(adim):
-            ekran_temizle()
-            v_idx = sayi_listesi.index('.')
-            if v_idx == len(sayi_listesi) - 1:
-                sayi_listesi.pop(v_idx)
-                sayi_listesi.append('0')
-                sayi_listesi.append('.')
-            else:
-                sayi_listesi[v_idx], sayi_listesi[v_idx+1] = sayi_listesi[v_idx+1], sayi_listesi[v_idx]
+st.title("🔢 Ondalık Sayılar: Virgülün Yolculuğu")
+
+# Giriş Alanları
+col1, col2 = st.columns(2)
+with col1:
+    sayi_input = st.text_input("Bir sayı girin (Virgüllü):", "3,456")
+with col2:
+    carpan = st.selectbox("Çarpanı seçin:", [10, 100, 1000])
+
+# Sayı kartlarının yerinde değişeceği alan
+placeholder = st.empty()
+
+if st.button("Hareketi Başlat! ✨"):
+    # Matematiksel işlem için virgülü noktaya çevir
+    sayi_str = sayi_input.replace(',', '.')
+    if '.' not in sayi_str: sayi_str += '.0'
+    liste = list(sayi_str)
+    adim_sayisi = len(str(carpan)) - 1
+    
+    for i in range(adim_sayisi + 1):
+        with placeholder.container():
+            # Sayıyı kartlar halinde tek satırda göster
+            html_content = '<div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap;">'
+            for char in liste:
+                if char == '.':
+                    html_content += '<div class="comma-style">,</div>'
+                else:
+                    html_content += f'<div class="digit-card">{char}</div>'
+            html_content += '</div>'
+            st.markdown(html_content, unsafe_allow_html=True)
             
-            print(f"\nAdım {i+1}: {''.join(sayi_listesi).rstrip('.')}")
-            time.sleep(1)
-
-        print("\n" + "*"*20)
-        print(f"SONUÇ: {''.join(sayi_listesi).rstrip('.')}")
-        print("*"*20)
-        
-        if input("\nDevam mı? (e/h): ").lower() != 'e': break
-
-if __name__ == "__main__":
-    virgulu_kaydir()
+            if i < adim_sayisi:
+                st.info(f"Adım {i+1}: Virgül bir sağa zıplıyor...")
+                # Virgül kaydırma mantığı
+                idx = liste.index('.')
+                if idx == len(liste) - 1:
+                    liste.pop(idx); liste.append('0'); liste.append('.')
+                else:
+                    liste[idx], liste[idx+1] = liste[idx+1], liste[idx]
+                time.sleep(1.5)
+            else:
+                sonuc = "".join(liste).replace('.', ',').rstrip(',')
+                st.success(f"İşlem Tamamlandı! Sonuç: {sonuc}")
+                st.balloons()
